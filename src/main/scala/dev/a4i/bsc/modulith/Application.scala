@@ -8,8 +8,8 @@ object Application extends ZIOAppDefault:
   override val bootstrap: ZLayer[Any, Any, Any] =
     Runtime.removeDefaultLoggers ++ SLF4J.slf4j
 
-  override val run: UIO[ExitCode] =
-    program.logError.exitCode
+  override val run: ZIO[Any, Throwable, Unit] =
+    program.unit
 
   private lazy val program: ZIO[Any, Throwable, Unit] =
     for _ <- ZIO.log("Hello from the Modulith!")
