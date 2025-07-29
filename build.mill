@@ -5,9 +5,15 @@ import mill.scalalib.*
 
 trait StdModule extends ScalaModule:
 
+  def jvmId = "temurin:21.0.7"
+
+  def javacOptions = Seq("--release", "21")
+
   def scalaVersion = "3.7.1"
 
   def scalacOptions = Seq(
+    "-release",
+    "21",
     "-language:strictEquality",
     "-indent",
     "-new-syntax",
