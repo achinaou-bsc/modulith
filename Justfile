@@ -4,20 +4,20 @@ default:
   @just --list --unsorted
 
 check-formatting:
-  scala fmt --check .
+  ./mill mill.scalalib.scalafmt/checkFormatAll
 
 format:
-  scala fmt .
+  ./mill mill.scalalib.scalafmt/
 
 run:
-  scala run .
+  ./mill modules.application.run
 
 clean:
   rm --recursive --force dist
-  scala clean .
+  ./mill clean
 
 compile:
-  scala compile .
+  ./mill -j 0 modules.__.compile
 
 test:
 
@@ -25,13 +25,9 @@ test:
 package:
   mkdir --parents dist
 
-  scala --power \
-    package --suppress-outdated-dependency-warning --assembly \
-      --preamble=false \
-      --output modulith.jar \
-      .
+  ./mill modules.application.assembly
 
-  mv modulith.jar dist
+  cp out/modules/application/assembly.dest/out.jar dist/application.jar
 
 env ENVIRONMENT:
   cp .env.d/{{ENVIRONMENT}}.env .env

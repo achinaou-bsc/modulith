@@ -1,0 +1,5 @@
+package build.modules
+
+import mill.Module
+
+object `package` extends Module

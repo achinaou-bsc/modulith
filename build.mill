@@ -1,0 +1,23 @@
+package build
+
+import mill.*
+import mill.scalalib.*
+
+trait StdModule extends ScalaModule:
+
+  def scalaVersion = "3.7.1"
+
+  def scalacOptions = Seq(
+    "-language:strictEquality",
+    "-indent",
+    "-new-syntax",
+    "-Xkind-projector:underscores",
+    "-deprecation",
+    "-feature",
+    "-explain",
+    "-explain-types",
+    "-Wsafe-init",
+    "-Wvalue-discard",
+    "-Wunused:all",
+    "-preview"
+  )
