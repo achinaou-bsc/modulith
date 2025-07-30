@@ -8,7 +8,7 @@
             "type": "scala",
             "request": "launch",
             "name": "Application",
-            "mainClass": "dev.a4i.bsc.modulith.Application",
+            "mainClass": "dev.a4i.bsc.modulith.application.Application",
             "args": [],
             "jvmOptions": [],
             "envFile": "${workspaceFolder}/.env"

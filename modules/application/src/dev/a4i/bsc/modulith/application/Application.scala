@@ -1,4 +1,4 @@
-package dev.a4i.bsc.modulith
+package dev.a4i.bsc.modulith.application
 
 import zio.*
 import zio.logging.backend.SLF4J
