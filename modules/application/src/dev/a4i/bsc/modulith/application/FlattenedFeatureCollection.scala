@@ -79,7 +79,7 @@ final class FlattenedFeatureCollection(featureCollection: SimpleFeatureCollectio
                     featureBuilder.reset
                     featureBuilder.init(delegateFeature)
                     featureBuilder.set(getSchema.getGeometryDescriptor.getLocalName, individualGeometry)
-                    featureBuilder.buildFeature(s"${delegateFeature.getID}_${index}")
+                    featureBuilder.buildFeature(s"${delegateFeature.getID}_${index + 1}")
 
       override def hasNext: Boolean =
         queueNext
