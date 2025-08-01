@@ -4,6 +4,7 @@ import org.geotools.data.simple.SimpleFeatureCollection
 import org.geotools.geojson.feature.FeatureJSON
 import os.*
 import zio.*
+import zio.stream.ZPipeline
 import zio.stream.ZSink
 import zio.stream.ZStream
 
@@ -21,7 +22,8 @@ class GeoJSONLWriterService:
                                 ZIO.whenZIO(ZIO.attemptBlockingIO(iterator.hasNext))(ZIO.attemptBlockingIO((iterator.next, iterator)))
                               .map(featureJSON.toString)
                               .intersperse("\n")
-                              .run(ZSink.fromFile(geoJSONLFile.toIO).contramapChunks[String](_.flatMap(_.getBytes)))
+                              .via(ZPipeline.utf8Encode)
+                              .run(ZSink.fromFile(geoJSONLFile.toIO))
       yield geoJSONLFile
 
 object GeoJSONLWriterService:
