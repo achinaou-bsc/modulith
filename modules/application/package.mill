@@ -14,6 +14,7 @@ object `package` extends StdModule:
     mvn"com.lihaoyi::os-lib:0.11.4",
     mvn"org.geotools:gt-geotiff:33.2",
     mvn"org.geotools:gt-geojson-store:33.2",
+    mvn"org.geotools:gt-cql:33.2",
     mvn"org.geotools.jdbc:gt-jdbc-postgis:33.2",
     mvn"org.postgresql:postgresql:42.7.7",
     mvn"dev.zio::zio-logging-slf4j2:2.5.1",
