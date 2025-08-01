@@ -4,9 +4,7 @@ import org.geotools.data.simple.SimpleFeatureCollection
 import org.geotools.geojson.feature.FeatureJSON
 import os.*
 import zio.*
-import zio.stream.ZPipeline
-import zio.stream.ZSink
-import zio.stream.ZStream
+import zio.stream.*
 
 class GeoJSONLWriterService:
 
