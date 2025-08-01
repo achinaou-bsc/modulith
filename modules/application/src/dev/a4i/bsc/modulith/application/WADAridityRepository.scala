@@ -7,7 +7,7 @@ import org.geotools.data.simple.SimpleFeatureCollection
 import org.geotools.filter.text.ecql.ECQL
 import zio.*
 
-private class WADAridityRepository(dataSource: PostGISDataStore):
+class WADAridityRepository(dataSource: PostGISDataStore):
 
   private val featureSource: SimpleFeatureSource = dataSource.getFeatureSource(WADAridityRepository.tableName)
 

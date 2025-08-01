@@ -13,6 +13,7 @@ object `package` extends StdModule:
     mvn"dev.zio::zio-http:3.3.3",
     mvn"com.lihaoyi::os-lib:0.11.4",
     mvn"org.geotools:gt-geotiff:33.2",
+    mvn"org.geotools:gt-geojson:33.2",
     mvn"org.geotools:gt-geojson-store:33.2",
     mvn"org.geotools:gt-cql:33.2",
     mvn"org.geotools.jdbc:gt-jdbc-postgis:33.2",
