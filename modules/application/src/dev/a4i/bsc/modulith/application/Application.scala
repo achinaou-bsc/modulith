@@ -6,7 +6,7 @@ import zio.logging.backend.SLF4J
 object Application extends ZIOAppDefault:
 
   override val bootstrap: ZLayer[Any, Any, Any] =
-    Runtime.removeDefaultLoggers ++ SLF4J.slf4j
+    Runtime.enableAutoBlockingExecutor ++ Runtime.removeDefaultLoggers ++ SLF4J.slf4j
 
   override val run: ZIO[Any, Throwable, Unit] =
     program.unit

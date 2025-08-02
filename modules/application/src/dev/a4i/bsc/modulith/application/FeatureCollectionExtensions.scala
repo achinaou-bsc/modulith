@@ -28,9 +28,7 @@ object FeatureCollectionExtensions:
           featureIterator.close
 
     def featuresStream: ZStream[Scope, Throwable, F] =
-      ZStream
-        .fromZIO:
-          ZIO.fromAutoCloseable(ZIO.attempt(featureCollection.featuresIterator))
-        .flatMap: featuresIterator =>
-          ZStream.unfoldZIO(featuresIterator): iterator =>
-            ZIO.whenZIO(ZIO.attempt(iterator.hasNext))(ZIO.attempt((iterator.next, iterator)))
+      ZStream.fromIteratorZIO(
+        ZIO.fromAutoCloseable(ZIO.attempt(featureCollection.featuresIterator)),
+        chunkSize = 1
+      )
