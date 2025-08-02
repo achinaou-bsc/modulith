@@ -6,23 +6,20 @@ import os.*
 import zio.*
 import zio.stream.*
 
+import dev.a4i.bsc.modulith.application.FeatureCollectionExtensions.*
+
 class GeoJSONLWriterService:
 
   def write(geoJSONLFile: Path, featureCollection: SimpleFeatureCollection): Task[Path] =
+    val featureJSON: FeatureJSON = FeatureJSON()
+
     ZIO.scoped:
-      for
-        featureJSON       = FeatureJSON()
-        featuresIterator <- ZIO.fromAutoCloseable:
-                              ZIO.attemptBlockingIO:
-                                featureCollection.features
-        _                <- ZStream
-                              .unfoldZIO(featuresIterator): iterator =>
-                                ZIO.whenZIO(ZIO.attemptBlockingIO(iterator.hasNext))(ZIO.attemptBlockingIO((iterator.next, iterator)))
-                              .map(featureJSON.toString)
-                              .intersperse("\n")
-                              .via(ZPipeline.utf8Encode)
-                              .run(ZSink.fromFile(geoJSONLFile.toIO))
-      yield geoJSONLFile
+      featureCollection.featuresStream
+        .map(featureJSON.toString)
+        .intersperse("\n")
+        .via(ZPipeline.utf8Encode)
+        .run(ZSink.fromFile(geoJSONLFile.toIO))
+        .as(geoJSONLFile)
 
 object GeoJSONLWriterService:
 
