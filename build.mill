@@ -9,7 +9,7 @@ trait StdModule extends ScalaModule:
 
   def javacOptions = Seq("--release", "21")
 
-  def scalaVersion = "3.7.1"
+  def scalaVersion = "3.7.2"
 
   def scalacOptions = Seq(
     "-release",

@@ -7,22 +7,22 @@ import org.geotools.data.simple.SimpleFeatureCollection
 import os.*
 import zio.*
 
-class GeoJSONWriterService:
+class GeoJSONService:
 
-  def write(geoJSONFile: Path, featureCollection: SimpleFeatureCollection): IO[IOException, Path] =
+  def write(featureCollection: SimpleFeatureCollection)(path: Path): IO[IOException, Path] =
     ZIO.scoped:
       for
         outputStream <- ZIO.fromAutoCloseable:
                           ZIO.attemptBlockingIO:
-                            os.write.over.outputStream(geoJSONFile)
+                            os.write.over.outputStream(path)
         writer       <- ZIO.fromAutoCloseable:
                           ZIO.attemptBlockingIO:
                             GeoJSONWriter(outputStream)
         _            <- ZIO.attemptBlockingIO:
                           writer.writeFeatureCollection(featureCollection)
-      yield geoJSONFile
+      yield path
 
-object GeoJSONWriterService:
+object GeoJSONService:
 
-  val layer: ULayer[GeoJSONWriterService] =
-    ZLayer.derive[GeoJSONWriterService]
+  val layer: ULayer[GeoJSONService] =
+    ZLayer.derive[GeoJSONService]
