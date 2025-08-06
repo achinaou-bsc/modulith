@@ -5,8 +5,8 @@ import java.util.UUID
 
 import org.apache.hadoop.fs.Path
 import zio.*
-import zio.Config
-import zio.config.magnolia.*
+import zio.config.magnolia.DeriveConfig
+import zio.config.magnolia.deriveConfig
 
 case class HadoopFileSystemWorkspace private (id: UUID, path: Path)
 
@@ -17,7 +17,7 @@ object HadoopFileSystemWorkspace:
 
   private def create: ZIO[HadoopFileSystem, Config.Error | IOException, HadoopFileSystemWorkspace] =
     for
-      configuration <- ZIO.config(Configuration.config)
+      configuration <- ZIO.config[Configuration]
       hdfs          <- ZIO.service[HadoopFileSystem]
       id             = UUID.randomUUID
       path           = Path(configuration.path, id.toString)
@@ -26,7 +26,7 @@ object HadoopFileSystemWorkspace:
 
   private def delete(workspace: HadoopFileSystemWorkspace): URIO[HadoopFileSystem, Unit] =
     for
-      configuration <- ZIO.config(Configuration.config).orDie
+      configuration <- ZIO.config[Configuration].orDie
       hdfs          <- ZIO.service[HadoopFileSystem]
       _             <- ZIO.whenDiscard(configuration.autoClean):
                          hdfs.delete(workspace.path, recursive = true).orDie
@@ -38,4 +38,4 @@ object HadoopFileSystemWorkspace:
 
     private given DeriveConfig[Path] = DeriveConfig[String].map(Path(_))
 
-    val config: Config[Configuration] = deriveConfig[Configuration].nested("hdfs", "workspaces")
+    given Config[Configuration] = deriveConfig[Configuration].nested("hadoop", "file", "system", "workspaces")

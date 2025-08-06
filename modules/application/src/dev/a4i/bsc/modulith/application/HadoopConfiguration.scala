@@ -26,4 +26,4 @@ object HadoopConfiguration:
 
   object Configuration:
 
-    given Config[Configuration] = deriveConfig.nested("hadoop")
+    given Config[Configuration] = deriveConfig.nested("hadoop", "configuration")

@@ -10,13 +10,17 @@ import zio.stream.ZSink
 import dev.a4i.bsc.modulith.application.GitHub.AssetQuery
 import dev.a4i.bsc.modulith.application.JobArtifactManager.JobArtifact
 
-class JobArtifactManager(gitHub: GitHub, hdfs: HadoopFileSystem, configuration: JobArtifactManager.Configuration):
+class JobArtifactManager(
+    gitHub: GitHub,
+    hdfs: HadoopFileSystem,
+    mutex: Semaphore,
+    configuration: JobArtifactManager.Configuration
+):
 
   def get(assetQuery: AssetQuery): Task[JobArtifact] =
-    for
-      localPath <- download(assetQuery)
-      hdfsPath  <- deploy(assetQuery)
-    yield JobArtifact(localPath, hdfsPath)
+    mutex.withPermit:
+      for (localPath, hdfsPath) <- download(assetQuery) <&> deploy(assetQuery)
+      yield JobArtifact(localPath, hdfsPath)
 
   private def download(assetQuery: AssetQuery): ZIO[Any, Throwable, LocalFileSystemPath] =
     val jobArtifactPath: LocalFileSystemPath =
@@ -24,11 +28,15 @@ class JobArtifactManager(gitHub: GitHub, hdfs: HadoopFileSystem, configuration: 
 
     ZIO
       .ifZIO(ZIO.attemptBlockingIO(os.exists(jobArtifactPath)))(
-        ZIO.unit,
+        ZIO.log("Job artifact is already downloaded"),
         ZIO.scoped:
-          for _ <- gitHub
-                     .streamReleaseAsset(assetQuery)
-                     .run(ZSink.fromPath(jobArtifactPath.toNIO))
+          for
+            _ <- ZIO.log("Downloading job artifact...")
+            _ <- ZIO.attemptBlockingIO:
+                   os.makeDir.all(jobArtifactPath / os.up)
+            _ <- gitHub
+                   .streamReleaseAsset(assetQuery)
+                   .run(ZSink.fromPath(jobArtifactPath.toNIO))
           yield ()
       )
       .as(jobArtifactPath)
@@ -39,11 +47,13 @@ class JobArtifactManager(gitHub: GitHub, hdfs: HadoopFileSystem, configuration: 
 
     ZIO
       .ifZIO(hdfs.exists(jobArtifactPath))(
-        ZIO.unit,
+        ZIO.log("Job artifact is already deployed"),
         ZIO.scoped:
-          for _ <- gitHub
-                     .streamReleaseAsset(assetQuery)
-                     .run(ZSink.fromOutputStreamScoped(hdfs.create(jobArtifactPath)))
+          for
+            _ <- ZIO.log("Deploying job artifact...")
+            _ <- gitHub
+                   .streamReleaseAsset(assetQuery)
+                   .run(ZSink.fromOutputStreamScoped(hdfs.create(jobArtifactPath)))
           yield ()
       )
       .as(jobArtifactPath)
@@ -51,6 +61,8 @@ class JobArtifactManager(gitHub: GitHub, hdfs: HadoopFileSystem, configuration: 
 object JobArtifactManager:
 
   val layer: ZLayer[GitHub & HadoopFileSystem, Config.Error, JobArtifactManager] =
+    given ZLayer.Derive.Default.WithContext[Any, Nothing, Semaphore] = ZLayer.Derive.Default.fromZIO(Semaphore.make(1))
+
     ZLayer.derive[JobArtifactManager]
 
   case class Configuration(local: Configuration.Local, hdfs: Configuration.HDFS)

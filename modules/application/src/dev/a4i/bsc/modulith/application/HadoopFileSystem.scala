@@ -21,12 +21,6 @@ class HadoopFileSystem(fileSystem: FileSystem):
   def delete(path: Path, recursive: Boolean = false): ZIO[Any, IOException, Boolean] =
     ZIO.attemptBlockingIO(fileSystem.delete(path, recursive))
 
-  def createSymlink(target: Path, link: Path): ZIO[Any, IOException, Unit] =
-    ZIO.attemptBlockingIO(fileSystem.createSymlink(target, link, false))
-
-  def getLinkTarget(link: Path): ZIO[Any, IOException, Path] =
-    ZIO.attemptBlockingIO(fileSystem.getLinkTarget(link))
-
 object HadoopFileSystem:
 
   val layer: URLayer[HadoopConfiguration, HadoopFileSystem] =
