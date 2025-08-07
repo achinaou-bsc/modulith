@@ -1,6 +1,7 @@
 package dev.a4i.bsc.modulith.application
 
 import java.net.URLClassLoader
+import scala.reflect.Selectable.reflectiveSelectable
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
@@ -13,17 +14,17 @@ import zio.stream.ZSink
 
 import dev.a4i.bsc.modulith.application.JobArtifactManager.JobArtifact
 
-class PolygonOverlayMapReduceNaiveService(
+class PolygonOverlayHadoopMapReduceNaiveService(
     jobArtifactManager: JobArtifactManager,
     hdfs: HadoopFileSystem,
     geoJSONLService: GeoJSONLService,
-    configuration: PolygonOverlayMapReduceNaiveService.Configuration
+    configuration: PolygonOverlayHadoopMapReduceNaiveService.Configuration
 ):
 
   def run(
       base: SimpleFeatureCollection,
       overlay: SimpleFeatureCollection
-  ): RIO[HadoopFileSystemWorkspace & HadoopConfiguration, Int] =
+  ): RIO[HadoopFileSystemWorkspace & HadoopConfiguration, String] =
     for
       workspace               <- ZIO.service[HadoopFileSystemWorkspace]
       _                       <- ZIO.log("Uploading input files...")
@@ -33,7 +34,7 @@ class PolygonOverlayMapReduceNaiveService(
       _                       <- ZIO.log("Ensuring job artifacts...")
       jobArtifact             <- ensureJobArtifacts
       _                       <- ZIO.log("Running the job...")
-      exitCode                <- run(
+      jobId                   <- run(
                                    jobArtifact,
                                    "dev.a4i.bsc.polygon.overlay.hadoop.mapreduce.naive.PolygonOverlayHadoopMapReduceNaive",
                                    basePath,
@@ -41,8 +42,8 @@ class PolygonOverlayMapReduceNaiveService(
                                    outputPath,
                                    referenceId
                                  )
-      _                       <- ZIO.log(s"Job exited with the value ${exitCode}")
-    yield exitCode
+      _                       <- ZIO.log(s"Job's id is: ${jobId}")
+    yield jobId
 
   private def uploadInputFiles(
       base: SimpleFeatureCollection,
@@ -67,7 +68,7 @@ class PolygonOverlayMapReduceNaiveService(
       "achinaou-bsc",
       "polygon-overlay-hadoop-mapreduce-naive",
       configuration.tag,
-      "polygon-overlay-hadoop-mapreduce-naive-all.jar"
+      "polygon-overlay-hadoop-mapreduce-naive.jar"
     ))
 
   private def run(
@@ -77,13 +78,11 @@ class PolygonOverlayMapReduceNaiveService(
       overlay: Path,
       output: Path,
       referenceId: String
-  ): RIO[HadoopConfiguration, Int] =
+  ): RIO[HadoopConfiguration, String] =
     for
       jobConfiguration <- ZIO.serviceWith[HadoopConfiguration]: hadoopConfiguration =>
                             new Configuration(hadoopConfiguration):
-                              set("mapreduce.framework.name", "yarn")
                               set("mapreduce.job.jar", jobArtifact.hdfs.toString)
-                              set("mapreduce.job.user.classpath.first", "true")
       loader           <- ZIO.attempt:
                             URLClassLoader(
                               Array(jobArtifact.local.toNIO.toUri.toURL),
@@ -94,7 +93,7 @@ class PolygonOverlayMapReduceNaiveService(
                               .forName(jobClass, true, loader)
                               .getDeclaredConstructor()
                               .newInstance()
-                              .asInstanceOf[Tool]
+                              .asInstanceOf[Tool & { def jobId: Option[String] }]
       arguments         = Array(
                             "--base",
                             base.toString,
@@ -103,16 +102,23 @@ class PolygonOverlayMapReduceNaiveService(
                             "--output",
                             output.toString,
                             "--reference-id",
-                            referenceId
+                            referenceId,
+                            "--wait-for-completion",
+                            "false"
                           )
-      exitCode         <- ZIO.attempt:
-                            ToolRunner.run(jobConfiguration, tool, arguments)
-    yield exitCode
+      _                <- ZIO.attempt:
+                            val exitCode: Int = ToolRunner.run(jobConfiguration, tool, arguments)
+                            if exitCode != 0 then throw new RuntimeException(s"Job failed with exit code $exitCode")
+      jobId            <- ZIO.attempt:
+                            tool.jobId.get
+    yield jobId
 
-object PolygonOverlayMapReduceNaiveService:
+object PolygonOverlayHadoopMapReduceNaiveService:
 
-  val layer: RLayer[JobArtifactManager & HadoopFileSystem & GeoJSONLService, PolygonOverlayMapReduceNaiveService] =
-    ZLayer.derive[PolygonOverlayMapReduceNaiveService]
+  type Dependencies = JobArtifactManager & HadoopFileSystem & GeoJSONLService
+
+  val layer: RLayer[Dependencies, PolygonOverlayHadoopMapReduceNaiveService] =
+    ZLayer.derive[PolygonOverlayHadoopMapReduceNaiveService]
 
   case class Configuration(
       token: String,
@@ -121,4 +127,5 @@ object PolygonOverlayMapReduceNaiveService:
 
   object Configuration:
 
-    given Config[Configuration] = deriveConfig[Configuration].nested("polygon", "overlay", "mapreduce", "naive")
+    given Config[Configuration] =
+      deriveConfig[Configuration].nested("polygon", "overlay", "hadoop", "mapreduce", "naive")

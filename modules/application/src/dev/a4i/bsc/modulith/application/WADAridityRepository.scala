@@ -11,13 +11,17 @@ class WADAridityRepository(dataSource: PostGISDataStore):
 
   private val featureSource: SimpleFeatureSource = dataSource.getFeatureSource(WADAridityRepository.tableName)
 
-  def findAll(): UIO[SimpleFeatureCollection] =
+  def findAll(limit: Option[Int] = None): UIO[SimpleFeatureCollection] =
     val filter: Filter = ECQL.toFilter:
       """
       true = true
       """
 
     val query: Query = Query(WADAridityRepository.tableName, filter)
+
+    limit match
+      case Some(value) => query.setMaxFeatures(value)
+      case None        => ()
 
     ZIO
       .attemptBlockingIO(featureSource.getFeatures(query))
