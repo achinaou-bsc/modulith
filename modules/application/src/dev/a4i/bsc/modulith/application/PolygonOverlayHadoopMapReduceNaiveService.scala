@@ -5,6 +5,7 @@ import scala.reflect.Selectable.reflectiveSelectable
 
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
+import org.apache.hadoop.mapreduce.JobID
 import org.apache.hadoop.util.Tool
 import org.apache.hadoop.util.ToolRunner
 import org.geotools.data.simple.SimpleFeatureCollection
@@ -93,7 +94,7 @@ class PolygonOverlayHadoopMapReduceNaiveService(
                               .forName(jobClass, true, loader)
                               .getDeclaredConstructor()
                               .newInstance()
-                              .asInstanceOf[Tool & { def jobId: Option[String] }]
+                              .asInstanceOf[Tool & { def jobId: Option[JobID] }]
       arguments         = Array(
                             "--base",
                             base.toString,
@@ -109,9 +110,9 @@ class PolygonOverlayHadoopMapReduceNaiveService(
       _                <- ZIO.attempt:
                             val exitCode: Int = ToolRunner.run(jobConfiguration, tool, arguments)
                             if exitCode != 0 then throw new RuntimeException(s"Job failed with exit code $exitCode")
-      jobId            <- ZIO.attempt:
-                            tool.jobId.get
-    yield jobId
+      applicationId    <- ZIO.attempt:
+                            tool.jobId.get.toString.replaceFirst("^job_", "application_")
+    yield applicationId.toString
 
 object PolygonOverlayHadoopMapReduceNaiveService:
 

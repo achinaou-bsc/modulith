@@ -1,24 +1,25 @@
 package dev.a4i.bsc.modulith.application
 
 import java.io.IOException
+import java.util.UUID
 
 import org.apache.hadoop.fs.Path
 import zio.*
 import zio.config.magnolia.DeriveConfig
 import zio.config.magnolia.deriveConfig
 
-case class HadoopFileSystemWorkspace private (id: String, path: Path)
+case class HadoopFileSystemWorkspace private (id: UUID, path: Path)
 
 object HadoopFileSystemWorkspace:
 
-  def layer(id: String): ZLayer[HadoopFileSystem, Config.Error | IOException, HadoopFileSystemWorkspace] =
+  def layer(id: UUID): ZLayer[HadoopFileSystem, IOException, HadoopFileSystemWorkspace] =
     ZLayer.scoped(ZIO.acquireRelease(create(id))(delete))
 
-  private def create(id: String): ZIO[HadoopFileSystem, Config.Error | IOException, HadoopFileSystemWorkspace] =
+  private def create(id: UUID): ZIO[HadoopFileSystem, IOException, HadoopFileSystemWorkspace] =
     for
-      configuration <- ZIO.config[Configuration]
+      configuration <- ZIO.config[Configuration].orDie
       hdfs          <- ZIO.service[HadoopFileSystem]
-      path           = Path(configuration.path, id)
+      path           = Path(configuration.path, id.toString)
       _             <- hdfs.createDirectories(path)
     yield HadoopFileSystemWorkspace(id, path)
 

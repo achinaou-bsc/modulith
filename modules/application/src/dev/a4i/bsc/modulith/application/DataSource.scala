@@ -36,4 +36,4 @@ object DataSource:
 
   object Configuration:
 
-    given Config[Configuration] = deriveConfig.nested("database")
+    given Config[Configuration] = deriveConfig.nested("postgres", "database")

@@ -1,6 +1,7 @@
 package dev.a4i.bsc.modulith.application
 
 import java.time.Instant
+import java.util.UUID
 
 import com.augustnagro.magnum.*
 
@@ -9,21 +10,18 @@ import dev.a4i.bsc.modulith.application.Job.*
 enum Job:
 
   def `type`: Type
-  def tag: String
   def status: Status
   def computationId: Option[String]
 
   case Preamble(
       `type`: Type,
-      tag: String,
       status: Status,
-      computationId: Option[String]
+      computationId: Option[String] = None
   )
 
-  @Table(PostgresDbType, SqlNameMapper.CamelToSnakeCase) case Persisted(
-      @Id id: String,
+  @SqlName("jobs") @Table(PostgresDbType, SqlNameMapper.CamelToSnakeCase) case Persisted(
+      @Id id: UUID,
       `type`: Type,
-      tag: String,
       status: Status,
       computationId: Option[String],
       submittedAt: Option[Instant],
@@ -35,7 +33,7 @@ object Job:
   given DbCodec[Job.Preamble]  = DbCodec.derived
   given DbCodec[Job.Persisted] = DbCodec.derived
 
-  val Table = TableInfo[Job.Preamble, Job.Persisted, String]
+  val Table = TableInfo[Job.Preamble, Job.Persisted, UUID]
 
   @Table(PostgresDbType, SqlNameMapper.CamelToUpperSnakeCase)
   enum Type derives CanEqual, DbCodec:
@@ -48,4 +46,4 @@ object Job:
     case Succeeded
     case Failed
     case Cancelled
-    case Completed
+    case Ended
