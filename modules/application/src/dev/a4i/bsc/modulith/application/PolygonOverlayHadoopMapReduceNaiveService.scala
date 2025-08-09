@@ -21,20 +21,20 @@ class PolygonOverlayHadoopMapReduceNaiveService(
     configuration: PolygonOverlayHadoopMapReduceNaiveService.Configuration
 ):
 
-  def run(
+  def submit(
       base: SimpleFeatureCollection,
       overlay: SimpleFeatureCollection
   ): RIO[HadoopFileSystemWorkspace & HadoopConfiguration, String] =
     for
       workspace               <- ZIO.service[HadoopFileSystemWorkspace]
-      _                       <- ZIO.log("Uploading input files...")
+      _                       <- ZIO.log(s"Job ${workspace.id}: Uploading input files...")
       (basePath, overlayPath) <- uploadInputFiles(base, overlay)
       outputPath               = Path(workspace.path, "output")
       referenceId              = workspace.id.toString
-      _                       <- ZIO.log("Ensuring job artifacts...")
+      _                       <- ZIO.log(s"Job ${workspace.id}: Ensuring job artifacts...")
       jobArtifact             <- ensureJobArtifacts
-      _                       <- ZIO.log("Running the job...")
-      jobId                   <- run(
+      _                       <- ZIO.log(s"Job ${workspace.id}: Submitting the job...")
+      jobId                   <- submit(
                                    jobArtifact,
                                    "dev.a4i.bsc.polygon.overlay.hadoop.mapreduce.naive.PolygonOverlayHadoopMapReduceNaive",
                                    basePath,
@@ -42,7 +42,7 @@ class PolygonOverlayHadoopMapReduceNaiveService(
                                    outputPath,
                                    referenceId
                                  )
-      _                       <- ZIO.log(s"Job's id is: ${jobId}")
+      _                       <- ZIO.log(s"Job ${workspace.id}: Received Yarn Application Id ${jobId}")
     yield jobId
 
   private def uploadInputFiles(
@@ -71,7 +71,7 @@ class PolygonOverlayHadoopMapReduceNaiveService(
       "polygon-overlay-hadoop-mapreduce-naive.jar"
     ))
 
-  private def run(
+  private def submit(
       jobArtifact: JobArtifact,
       jobClass: String,
       base: Path,

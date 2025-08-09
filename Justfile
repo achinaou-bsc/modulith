@@ -45,3 +45,13 @@ local-env-destroy:
   docker compose down --volumes
 
 local-env-reset: local-env-destroy local-env-create
+
+tunnel-hadoop:
+  #! /usr/bin/env bash
+
+  gcloud compute ssh hadoop-m --project="$GCLOUD_PROJECT_ID" --zone="$GCLOUD_ZONE" --tunnel-through-iap -- \
+    -N \
+    -L 8020:$GCLOUD_INSTANCE:8020 \
+    -L 8032:$GCLOUD_INSTANCE:8032 \
+    -L 9866:$GCLOUD_INSTANCE:9866 \
+    $(for port in $(seq "$HADOOP_CONFIGURATION_MAPRED_DEFAULT_YARN_APP_MAPREDUCE_AM_JOB_CLIENT_PORT_RANGE_START" "$HADOOP_CONFIGURATION_MAPRED_DEFAULT_YARN_APP_MAPREDUCE_AM_JOB_CLIENT_PORT_RANGE_END"); do printf ' -L %d:%s:%d' "$port" "$GCLOUD_INSTANCE" "$port"; done)
