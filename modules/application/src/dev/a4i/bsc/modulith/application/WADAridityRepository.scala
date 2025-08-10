@@ -24,7 +24,7 @@ class WADAridityRepository(dataSource: PostGISDataStore):
       case None        => ()
 
     ZIO
-      .attemptBlockingIO(featureSource.getFeatures(query))
+      .attemptBlocking(featureSource.getFeatures(query))
       .orDie
 
 object WADAridityRepository:

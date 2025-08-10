@@ -9,7 +9,7 @@ class Migrator(dataSource: DataSource):
 
   val migrate: UIO[Unit] =
     ZIO
-      .attemptBlockingIO:
+      .attemptBlocking:
         Flyway.configure
           .dataSource(dataSource)
           .load

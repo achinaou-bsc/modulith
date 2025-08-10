@@ -52,7 +52,7 @@ class JobStatusSynchronizer(
   private def fetchJobStatus(job: Job.Persisted): UIO[Status] =
     for
       applicationId        <- ZIO.attempt(ApplicationId.fromString(job.computationId.get)).orDie
-      report               <- ZIO.attemptBlockingInterrupt(yarnClient.getApplicationReport(applicationId)).orDie
+      report               <- ZIO.attemptBlocking(yarnClient.getApplicationReport(applicationId)).orDie
       applicationFinalState = report.getFinalApplicationStatus
     yield applicationFinalState match
       case FinalApplicationStatus.UNDEFINED => Status.Submitted
@@ -74,7 +74,7 @@ class JobStatusSynchronizer(
 
 object JobStatusSynchronizer:
 
-  val layer =
+  val layer: URLayer[JobRepository & YarnClient, JobStatusSynchronizer] =
     ZLayer.scoped:
       ZIO.scopeWith: scope =>
         for

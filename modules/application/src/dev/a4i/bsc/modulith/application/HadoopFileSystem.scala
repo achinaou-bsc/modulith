@@ -1,7 +1,5 @@
 package dev.a4i.bsc.modulith.application
 
-import java.io.IOException
-
 import org.apache.hadoop.fs.FileSystem
 import org.apache.hadoop.fs.FSDataOutputStream
 import org.apache.hadoop.fs.Path
@@ -9,17 +7,17 @@ import zio.*
 
 class HadoopFileSystem(fileSystem: FileSystem):
 
-  def exists(path: Path): ZIO[Any, IOException, Boolean] =
-    ZIO.attemptBlockingIO(fileSystem.exists(path))
+  def exists(path: Path): UIO[Boolean] =
+    ZIO.attemptBlocking(fileSystem.exists(path)).orDie
 
-  def create(path: Path): ZIO[Scope, IOException, FSDataOutputStream] =
-    ZIO.fromAutoCloseable(ZIO.attemptBlockingIO(fileSystem.create(path)))
+  def create(path: Path): URIO[Scope, FSDataOutputStream] =
+    ZIO.fromAutoCloseable(ZIO.attemptBlocking(fileSystem.create(path))).orDie
 
-  def createDirectories(path: Path): ZIO[Any, IOException, Boolean] =
-    ZIO.attemptBlockingIO(fileSystem.mkdirs(path))
+  def createDirectories(path: Path): UIO[Boolean] =
+    ZIO.attemptBlocking(fileSystem.mkdirs(path)).orDie
 
-  def delete(path: Path, recursive: Boolean = false): ZIO[Any, IOException, Boolean] =
-    ZIO.attemptBlockingIO(fileSystem.delete(path, recursive))
+  def delete(path: Path, recursive: Boolean = false): UIO[Boolean] =
+    ZIO.attemptBlocking(fileSystem.delete(path, recursive)).orDie
 
 object HadoopFileSystem:
 

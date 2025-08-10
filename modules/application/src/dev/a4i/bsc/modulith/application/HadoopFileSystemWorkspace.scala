@@ -1,6 +1,5 @@
 package dev.a4i.bsc.modulith.application
 
-import java.io.IOException
 import java.util.UUID
 
 import org.apache.hadoop.fs.Path
@@ -12,10 +11,10 @@ case class HadoopFileSystemWorkspace private (id: UUID, path: Path)
 
 object HadoopFileSystemWorkspace:
 
-  def layer(id: UUID): ZLayer[HadoopFileSystem, IOException, HadoopFileSystemWorkspace] =
+  def layer(id: UUID): URLayer[HadoopFileSystem, HadoopFileSystemWorkspace] =
     ZLayer.scoped(ZIO.acquireRelease(create(id))(delete))
 
-  private def create(id: UUID): ZIO[HadoopFileSystem, IOException, HadoopFileSystemWorkspace] =
+  private def create(id: UUID): URIO[HadoopFileSystem, HadoopFileSystemWorkspace] =
     for
       configuration <- ZIO.config[Configuration].orDie
       hdfs          <- ZIO.service[HadoopFileSystem]
@@ -28,7 +27,7 @@ object HadoopFileSystemWorkspace:
       configuration <- ZIO.config[Configuration].orDie
       hdfs          <- ZIO.service[HadoopFileSystem]
       _             <- ZIO.whenDiscard(configuration.autoClean):
-                         hdfs.delete(workspace.path, recursive = true).orDie
+                         hdfs.delete(workspace.path, recursive = true)
     yield ()
 
   case class Configuration(path: Path, autoClean: Boolean)

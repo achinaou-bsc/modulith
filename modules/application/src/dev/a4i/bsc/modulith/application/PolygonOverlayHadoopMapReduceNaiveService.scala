@@ -25,7 +25,7 @@ class PolygonOverlayHadoopMapReduceNaiveService(
   def submit(
       base: SimpleFeatureCollection,
       overlay: SimpleFeatureCollection
-  ): RIO[HadoopFileSystemWorkspace & HadoopConfiguration, String] =
+  ): URIO[HadoopFileSystemWorkspace & HadoopConfiguration, String] =
     for
       workspace               <- ZIO.service[HadoopFileSystemWorkspace]
       _                       <- ZIO.log(s"Job ${workspace.id}: Uploading input files...")
@@ -42,19 +42,20 @@ class PolygonOverlayHadoopMapReduceNaiveService(
                                    overlayPath,
                                    outputPath,
                                    referenceId
-                                 )
+                                 ).orDie
       _                       <- ZIO.log(s"Job ${workspace.id}: Received Yarn Application Id ${jobId}")
     yield jobId
 
   private def uploadInputFiles(
       base: SimpleFeatureCollection,
       overlay: SimpleFeatureCollection
-  ): RIO[HadoopFileSystemWorkspace, (basePath: Path, overlayPath: Path)] =
-    def upload(featureCollection: SimpleFeatureCollection, path: Path): Task[Long] =
+  ): URIO[HadoopFileSystemWorkspace, (basePath: Path, overlayPath: Path)] =
+    def upload(featureCollection: SimpleFeatureCollection, path: Path): UIO[Long] =
       ZIO.scoped:
         geoJSONLService
           .encode(FlattenedFeatureCollection(featureCollection))
           .run(ZSink.fromOutputStreamScoped(hdfs.create(path)))
+          .orDie
 
     for
       workspace  <- ZIO.service[HadoopFileSystemWorkspace]
@@ -63,7 +64,7 @@ class PolygonOverlayHadoopMapReduceNaiveService(
       _          <- upload(base, basePath) <&> upload(overlay, overlayPath)
     yield (basePath, overlayPath)
 
-  private def ensureJobArtifacts: Task[JobArtifact] =
+  private def ensureJobArtifacts: UIO[JobArtifact] =
     jobArtifactManager.get(GitHub.AssetQuery(
       configuration.token,
       "achinaou-bsc",

@@ -7,7 +7,7 @@ type YarnClient = HadoopYarnClient
 
 object YarnClient:
 
-  val layer: RLayer[HadoopConfiguration, YarnClient] =
+  val layer: URLayer[HadoopConfiguration, YarnClient] =
     ZLayer.scoped:
       for
         hadoopConfiguration <- ZIO.service[HadoopConfiguration]
@@ -16,5 +16,5 @@ object YarnClient:
                                    val yarnClient: YarnClient = HadoopYarnClient.createYarnClient()
                                    yarnClient.init(hadoopConfiguration)
                                    yarnClient
-        _                   <- ZIO.attempt(yarnClient.start).orDie
+        _                   <- ZIO.attemptBlocking(yarnClient.start).orDie
       yield yarnClient

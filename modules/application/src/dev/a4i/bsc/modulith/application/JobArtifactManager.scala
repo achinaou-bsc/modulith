@@ -17,31 +17,31 @@ class JobArtifactManager(
     configuration: JobArtifactManager.Configuration
 ):
 
-  def get(assetQuery: AssetQuery): Task[JobArtifact] =
+  def get(assetQuery: AssetQuery): UIO[JobArtifact] =
     mutex.withPermit:
       for (localPath, hdfsPath) <- download(assetQuery) <&> deploy(assetQuery)
       yield JobArtifact(localPath, hdfsPath)
 
-  private def download(assetQuery: AssetQuery): ZIO[Any, Throwable, LocalFileSystemPath] =
+  private def download(assetQuery: AssetQuery): UIO[LocalFileSystemPath] =
     val jobArtifactPath: LocalFileSystemPath =
       LocalFileSystemPath(s"${configuration.local.path}/${assetQuery.repository}/${assetQuery.tag}/job.jar")
 
     ZIO
-      .ifZIO(ZIO.attemptBlockingIO(os.exists(jobArtifactPath)))(
+      .ifZIO(ZIO.attemptBlocking(os.exists(jobArtifactPath)))(
         ZIO.log("Job artifact is already downloaded"),
         ZIO.scoped:
           for
             _ <- ZIO.log("Downloading job artifact...")
-            _ <- ZIO.attemptBlockingIO:
-                   os.makeDir.all(jobArtifactPath / os.up)
+            _ <- ZIO.attemptBlocking(os.makeDir.all(jobArtifactPath / os.up))
             _ <- gitHub
                    .streamReleaseAsset(assetQuery)
                    .run(ZSink.fromPath(jobArtifactPath.toNIO))
           yield ()
       )
       .as(jobArtifactPath)
+      .orDie
 
-  private def deploy(assetQuery: AssetQuery): ZIO[Any, Throwable, HadoopFileSystemPath] =
+  private def deploy(assetQuery: AssetQuery): UIO[HadoopFileSystemPath] =
     val jobArtifactPath: HadoopFileSystemPath =
       HadoopFileSystemPath(s"${configuration.hdfs.path}/${assetQuery.repository}/${assetQuery.tag}/job.jar")
 
@@ -57,6 +57,7 @@ class JobArtifactManager(
           yield ()
       )
       .as(jobArtifactPath)
+      .orDie
 
 object JobArtifactManager:
 
