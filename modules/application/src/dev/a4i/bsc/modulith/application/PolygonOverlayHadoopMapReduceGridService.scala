@@ -8,12 +8,11 @@ import zio.config.*
 import zio.config.magnolia.deriveConfig
 
 import dev.a4i.bsc.modulith.application.JobArtifactManager.JobArtifact
-import dev.a4i.bsc.modulith.application.PolygonOverlayHadoopMapReduceService.ToolDescriptor
 
-class PolygonOverlayHadoopMapReduceNaiveService(
+class PolygonOverlayHadoopMapReduceGridService(
     jobArtifactManager: JobArtifactManager,
     polygonOverlayHadoopMapReduceService: PolygonOverlayHadoopMapReduceService,
-    configuration: PolygonOverlayHadoopMapReduceNaiveService.Configuration
+    configuration: PolygonOverlayHadoopMapReduceGridService.Configuration
 ):
 
   def submit(
@@ -31,7 +30,7 @@ class PolygonOverlayHadoopMapReduceNaiveService(
                            )
     yield yarnApplicationId
 
-  def getToolDescriptor: UIO[ToolDescriptor] =
+  def getToolDescriptor: UIO[PolygonOverlayHadoopMapReduceService.ToolDescriptor] =
     jobArtifactManager
       .get(GitHub.AssetQuery(
         configuration.token,
@@ -43,14 +42,14 @@ class PolygonOverlayHadoopMapReduceNaiveService(
       .zip(ZIO.succeed(
         configuration.toolClassFqn
       ))
-      .map(ToolDescriptor.apply)
+      .map(PolygonOverlayHadoopMapReduceService.ToolDescriptor.apply)
 
-object PolygonOverlayHadoopMapReduceNaiveService:
+object PolygonOverlayHadoopMapReduceGridService:
 
   type Dependencies = JobArtifactManager & PolygonOverlayHadoopMapReduceService
 
-  val layer: RLayer[Dependencies, PolygonOverlayHadoopMapReduceNaiveService] =
-    ZLayer.derive[PolygonOverlayHadoopMapReduceNaiveService]
+  val layer: RLayer[Dependencies, PolygonOverlayHadoopMapReduceGridService] =
+    ZLayer.derive[PolygonOverlayHadoopMapReduceGridService]
 
   case class Configuration(
       token: String,
@@ -64,4 +63,4 @@ object PolygonOverlayHadoopMapReduceNaiveService:
   object Configuration:
 
     given Config[Configuration] =
-      deriveConfig[Configuration].nested("polygon", "overlay", "hadoop", "mapreduce", "naive").mapKey(toKebabCase)
+      deriveConfig[Configuration].nested("polygon", "overlay", "hadoop", "mapreduce", "grid").mapKey(toKebabCase)

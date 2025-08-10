@@ -61,10 +61,10 @@ class JobArtifactManager(
 
 object JobArtifactManager:
 
-  val layer: ZLayer[GitHub & HadoopFileSystem, Config.Error, JobArtifactManager] =
+  val layer: URLayer[GitHub & HadoopFileSystem, JobArtifactManager] =
     given ZLayer.Derive.Default.WithContext[Any, Nothing, Semaphore] = ZLayer.Derive.Default.fromZIO(Semaphore.make(1))
 
-    ZLayer.derive[JobArtifactManager]
+    ZLayer.derive[JobArtifactManager].orDie
 
   case class Configuration(local: Configuration.Local, hdfs: Configuration.HDFS)
 

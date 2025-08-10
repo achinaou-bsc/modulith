@@ -7,7 +7,7 @@ import zio.*
 import zio.config.magnolia.DeriveConfig
 import zio.config.magnolia.deriveConfig
 
-case class HadoopFileSystemWorkspace private (id: UUID, path: Path)
+case class HadoopFileSystemWorkspace private (path: Path)
 
 object HadoopFileSystemWorkspace:
 
@@ -20,7 +20,7 @@ object HadoopFileSystemWorkspace:
       hdfs          <- ZIO.service[HadoopFileSystem]
       path           = Path(configuration.path, id.toString)
       _             <- hdfs.createDirectories(path)
-    yield HadoopFileSystemWorkspace(id, path)
+    yield HadoopFileSystemWorkspace(path)
 
   private def delete(workspace: HadoopFileSystemWorkspace): URIO[HadoopFileSystem, Unit] =
     for

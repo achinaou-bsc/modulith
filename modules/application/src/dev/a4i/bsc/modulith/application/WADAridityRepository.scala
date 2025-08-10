@@ -20,7 +20,7 @@ class WADAridityRepository(dataSource: PostGISDataStore):
     val query: Query = Query(WADAridityRepository.tableName, filter)
 
     limit match
-      case Some(value) => query.setMaxFeatures(value)
+      case Some(limit) => query.setMaxFeatures(limit)
       case None        => ()
 
     ZIO
