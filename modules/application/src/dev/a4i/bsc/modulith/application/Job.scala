@@ -38,6 +38,7 @@ object Job:
   @Table(PostgresDbType, SqlNameMapper.CamelToUpperSnakeCase)
   enum Type derives CanEqual, DbCodec:
     case Naive
+    case Grid
 
   @Table(PostgresDbType, SqlNameMapper.CamelToUpperSnakeCase)
   enum Status derives CanEqual, DbCodec:
