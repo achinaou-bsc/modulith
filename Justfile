@@ -47,8 +47,6 @@ local-env-destroy:
 local-env-reset: local-env-destroy local-env-create
 
 tunnel-hadoop:
-  #! /usr/bin/env bash
-
   gcloud compute ssh hadoop-m --project="$GCLOUD_PROJECT_ID" --zone="$GCLOUD_ZONE" --tunnel-through-iap -- \
     -N \
     -L 8020:$GCLOUD_INSTANCE:8020 \
