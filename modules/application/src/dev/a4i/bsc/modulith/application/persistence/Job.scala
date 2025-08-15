@@ -13,18 +13,22 @@ enum Job:
 
   def `type`: Type
   def status: Status
-  def computationId: Option[String]
+  def temperaturePredicate: String
+  def aridityPredicate: String
 
   case Preamble(
       `type`: Type,
       status: Status,
-      computationId: Option[String] = None
+      temperaturePredicate: String,
+      aridityPredicate: String
   )
 
   @SqlName("jobs") @Table(PostgresDbType, SqlNameMapper.CamelToSnakeCase) case Persisted(
       @Id id: UUID,
       `type`: Type,
       status: Status,
+      temperaturePredicate: String,
+      aridityPredicate: String,
       computationId: Option[String],
       submittedAt: Option[Instant],
       completedAt: Option[Instant]

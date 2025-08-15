@@ -4,6 +4,7 @@ import java.util.UUID
 
 import com.augustnagro.magnum.*
 import com.augustnagro.magnum.magzio.*
+import io.scalaland.chimney.dsl.*
 import zio.*
 
 import dev.a4i.bsc.modulith.application.persistence.Job
@@ -32,7 +33,28 @@ class JobRepository(repository: MagnumRepository, transactor: TransactorZIO):
 
   def create(job: Preamble): UIO[Persisted] =
     transactor
-      .transact(repository.insertReturning(job))
+      .transact:
+        val id: UUID =
+          sql"""
+            INSERT INTO ${Job.Table} (
+              ${Job.Table.`type`},
+              ${Job.Table.status},
+              ${Job.Table.temperaturePredicate},
+              ${Job.Table.aridityPredicate}
+            ) VALUES (
+              ${job.`type`},
+              ${job.status},
+              ${job.temperaturePredicate},
+              ${job.aridityPredicate}
+            )
+            RETURNING ${Job.Table.id}
+          """.returning[UUID].run().head
+
+        job
+          .into[Persisted]
+          .withFieldConst(_.id, id)
+          .enableOptionDefaultsToNone
+          .transform
       .orDie
 
   def markAsSubmitted(id: UUID, computationId: String): UIO[Unit] =
@@ -41,8 +63,8 @@ class JobRepository(repository: MagnumRepository, transactor: TransactorZIO):
         sql"""
           UPDATE ${Job.Table}
           SET
-            ${Job.Table.computationId} = ${computationId},
             ${Job.Table.status}        = ${Status.Submitted},
+            ${Job.Table.computationId} = ${computationId},
             ${Job.Table.submittedAt}   = CURRENT_TIMESTAMP
           WHERE
             ${Job.Table.id}            = ${id}

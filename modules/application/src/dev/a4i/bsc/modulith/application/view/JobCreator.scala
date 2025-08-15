@@ -11,7 +11,9 @@ object JobCreator:
   object Model:
 
     case class FormData(
-        `type`: String
+        `type`: String,
+        temperaturePredicate: String,
+        aridityPredicate: String
     )
 
     object FormData:
@@ -24,16 +26,18 @@ object JobCreator:
         hxExtAttr  := "form-json",
         hxPostAttr := "/jobs/creator",
         div(
-          classAttr := "grid gap-6 mb-6 md:grid-cols-2",
+          classAttr := "grid gap-6 mb-6 md:grid-cols-1",
           div(
             label(
-              forAttr   := "type",
-              classAttr := "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+              forAttr      := "type",
+              classAttr    := "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
               "Type"
             ),
             select(
-              idAttr    := "type",
-              classAttr := "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
+              idAttr       := "type",
+              nameAttr     := "type",
+              requiredAttr := true,
+              classAttr    := "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500",
               option(
                 valueAttr    := "Naive",
                 selectedAttr := "selected",
@@ -43,6 +47,34 @@ object JobCreator:
                 valueAttr    := "Grid",
                 "Grid"
               )
+            )
+          ),
+          div(
+            label(
+              forAttr         := "temperaturePredicate",
+              classAttr       := "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+              "Temperature Predicate"
+            ),
+            input(
+              idAttr          := "temperaturePredicate",
+              nameAttr        := "temperaturePredicate",
+              placeholderAttr := "Temperature Predicate",
+              requiredAttr    := true,
+              classAttr       := "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            )
+          ),
+          div(
+            label(
+              forAttr         := "aridityPredicate",
+              classAttr       := "block mb-2 text-sm font-medium text-gray-900 dark:text-white",
+              "Aridity Predicate"
+            ),
+            input(
+              idAttr          := "aridityPredicate",
+              nameAttr        := "aridityPredicate",
+              placeholderAttr := "Aridity Predicate",
+              requiredAttr    := true,
+              classAttr       := "bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
             )
           )
         ),

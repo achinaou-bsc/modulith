@@ -9,7 +9,6 @@ import zio.config.*
 import zio.config.magnolia.deriveConfig
 
 import dev.a4i.bsc.modulith.application.github.GitHub
-import dev.a4i.bsc.modulith.application.hadoop.HadoopConfiguration
 import dev.a4i.bsc.modulith.application.hadoop.HadoopFileSystemWorkspace
 import dev.a4i.bsc.modulith.application.service.PolygonOverlayHadoopMapReduceService.ToolDescriptor
 
@@ -23,7 +22,7 @@ class PolygonOverlayHadoopMapReduceGridService(
       jobId: UUID,
       base: SimpleFeatureCollection,
       overlay: SimpleFeatureCollection
-  ): URIO[HadoopFileSystemWorkspace & HadoopConfiguration, String] =
+  ): URIO[HadoopFileSystemWorkspace, String] =
     for
       toolDescriptor    <- getToolDescriptor
       yarnApplicationId <- polygonOverlayHadoopMapReduceService.submit(

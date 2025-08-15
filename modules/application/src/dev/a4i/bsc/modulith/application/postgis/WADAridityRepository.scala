@@ -13,13 +13,20 @@ class WADAridityRepository(dataSource: PostGISDataStore):
 
   private val featureSource: SimpleFeatureSource = dataSource.getFeatureSource(WADAridityRepository.tableName)
 
-  def findAll(limit: Option[Int] = None): UIO[SimpleFeatureCollection] =
-    val filter: Filter = ECQL.toFilter:
-      """
-      true = true
-      """
+  def findAll(limit: Option[Int]): UIO[SimpleFeatureCollection] =
+    val query: Query = Query(WADAridityRepository.tableName)
 
-    val query: Query = Query(WADAridityRepository.tableName, filter)
+    limit match
+      case Some(limit) => query.setMaxFeatures(limit)
+      case None        => ()
+
+    ZIO
+      .attemptBlocking(featureSource.getFeatures(query))
+      .orDie
+
+  def findAll(predicate: String, limit: Option[Int]): UIO[SimpleFeatureCollection] =
+    val filter: Filter = ECQL.toFilter(predicate)
+    val query: Query   = Query(WADAridityRepository.tableName, filter)
 
     limit match
       case Some(limit) => query.setMaxFeatures(limit)

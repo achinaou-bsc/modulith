@@ -14,21 +14,25 @@ import zio.*
 import zio.stream.ZSink
 
 import dev.a4i.bsc.modulith.application.geo.FlattenedFeatureCollection
-import dev.a4i.bsc.modulith.application.geo.GeoJSONLService
+import dev.a4i.bsc.modulith.application.geo.GeoJSONSequenceService
 import dev.a4i.bsc.modulith.application.hadoop.HadoopConfiguration
 import dev.a4i.bsc.modulith.application.hadoop.HadoopFileSystem
 import dev.a4i.bsc.modulith.application.hadoop.HadoopFileSystemWorkspace
 import dev.a4i.bsc.modulith.application.service.JobArtifactManager.JobArtifact
 import dev.a4i.bsc.modulith.application.service.PolygonOverlayHadoopMapReduceService.ToolDescriptor
 
-class PolygonOverlayHadoopMapReduceService(hdfs: HadoopFileSystem, geoJSONLService: GeoJSONLService):
+class PolygonOverlayHadoopMapReduceService(
+    geoJSONSequenceService: GeoJSONSequenceService,
+    hdfs: HadoopFileSystem,
+    hadoopConfiguration: HadoopConfiguration
+):
 
   def submit(
       jobId: UUID,
       toolDescriptor: ToolDescriptor,
       base: SimpleFeatureCollection,
       overlay: SimpleFeatureCollection
-  ): URIO[HadoopFileSystemWorkspace & HadoopConfiguration, String] =
+  ): URIO[HadoopFileSystemWorkspace, String] =
     ZIO.logSpan("polygon-overlay-hadoop-map-reduce-service.submit"):
       ZIO.logAnnotate("job-id", jobId.toString):
         for
@@ -43,7 +47,7 @@ class PolygonOverlayHadoopMapReduceService(hdfs: HadoopFileSystem, geoJSONLServi
                                        overlayPath,
                                        outputPath,
                                        jobId.toString
-                                     ).orDie
+                                     )
           _                       <- ZIO.logAnnotate("yarn-application-id", yarnApplicationId):
                                        ZIO.log(s"Job got Yarn Application Id: ${yarnApplicationId}")
         yield yarnApplicationId
@@ -54,7 +58,7 @@ class PolygonOverlayHadoopMapReduceService(hdfs: HadoopFileSystem, geoJSONLServi
   ): URIO[HadoopFileSystemWorkspace, (basePath: Path, overlayPath: Path)] =
     def upload(featureCollection: SimpleFeatureCollection, path: Path): UIO[Long] =
       ZIO.scoped:
-        geoJSONLService
+        geoJSONSequenceService
           .encode(FlattenedFeatureCollection(featureCollection))
           .run(ZSink.fromOutputStreamScoped(hdfs.create(path)))
           .orDie
@@ -72,44 +76,47 @@ class PolygonOverlayHadoopMapReduceService(hdfs: HadoopFileSystem, geoJSONLServi
       overlay: Path,
       output: Path,
       referenceId: String
-  ): RIO[HadoopConfiguration, String] =
+  ): UIO[String] =
     for
-      jobConfiguration <- ZIO.serviceWith[HadoopConfiguration]: hadoopConfiguration =>
-                            new Configuration(hadoopConfiguration):
-                              set("mapreduce.job.jar", toolDescriptor.jar.hdfs.toString)
-      loader           <- ZIO.attempt:
-                            URLClassLoader(
-                              Array(toolDescriptor.jar.local.toNIO.toUri.toURL),
-                              getClass.getClassLoader
-                            )
-      tool             <- ZIO.attempt:
-                            Class
-                              .forName(toolDescriptor.classFqn, true, loader)
-                              .getDeclaredConstructor()
-                              .newInstance()
-                              .asInstanceOf[Tool & { def jobId: Option[JobID] }]
-      arguments         = Array(
-                            "--base",
-                            base.toString,
-                            "--overlay",
-                            overlay.toString,
-                            "--output",
-                            output.toString,
-                            "--reference-id",
-                            referenceId,
-                            "--wait-for-completion",
-                            "false"
-                          )
-      _                <- ZIO.attempt:
-                            val exitCode: Int = ToolRunner.run(jobConfiguration, tool, arguments)
-                            if exitCode != 0 then throw RuntimeException(s"Job submission failed with exit code $exitCode")
-      applicationId    <- ZIO.attempt:
-                            tool.jobId.get.toString.replaceFirst("^job_", "application_")
+      jobConfiguration = new Configuration(hadoopConfiguration):
+                           set("mapreduce.job.jar", toolDescriptor.jar.hdfs.toString)
+      loader          <- ZIO
+                           .attempt:
+                             URLClassLoader(Array(toolDescriptor.jar.local.toNIO.toUri.toURL), getClass.getClassLoader)
+                           .orDie
+      tool            <- ZIO
+                           .attempt:
+                             Class
+                               .forName(toolDescriptor.classFqn, true, loader)
+                               .getDeclaredConstructor()
+                               .newInstance()
+                               .asInstanceOf[Tool & { def jobId: Option[JobID] }]
+                           .orDie
+      arguments        = Array(
+                           "--base",
+                           base.toString,
+                           "--overlay",
+                           overlay.toString,
+                           "--output",
+                           output.toString,
+                           "--reference-id",
+                           referenceId,
+                           "--wait-for-completion",
+                           "false"
+                         )
+      _               <- ZIO
+                           .attempt:
+                             val exitCode: Int = ToolRunner.run(jobConfiguration, tool, arguments)
+                             if exitCode != 0 then throw RuntimeException(s"Job submission failed with exit code $exitCode")
+                           .orDie
+      applicationId   <- ZIO
+                           .attempt(tool.jobId.get.toString.replaceFirst("^job_", "application_"))
+                           .orDie
     yield applicationId.toString
 
 object PolygonOverlayHadoopMapReduceService:
 
-  type Dependencies = HadoopFileSystem & GeoJSONLService
+  type Dependencies = GeoJSONSequenceService & HadoopFileSystem & HadoopConfiguration
 
   val layer: RLayer[Dependencies, PolygonOverlayHadoopMapReduceService] =
     ZLayer.derive[PolygonOverlayHadoopMapReduceService]

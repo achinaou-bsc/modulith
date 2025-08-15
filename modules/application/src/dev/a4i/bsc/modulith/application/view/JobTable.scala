@@ -19,14 +19,15 @@ object JobTable:
             th(scopeAttr := "col", classAttr := "px-6 py-3", "ID"),
             th(scopeAttr := "col", classAttr := "px-6 py-3", "Type"),
             th(scopeAttr := "col", classAttr := "px-6 py-3", "Status"),
-            th(scopeAttr := "col", classAttr := "px-6 py-3", "Computation ID"),
+            th(scopeAttr := "col", classAttr := "px-6 py-3", "Temperature Predicate"),
+            th(scopeAttr := "col", classAttr := "px-6 py-3", "Aridity Predicate"),
             th(scopeAttr := "col", classAttr := "px-6 py-3", "Submitted At"),
             th(scopeAttr := "col", classAttr := "px-6 py-3", "Completed At"),
             th(scopeAttr := "col", classAttr := "px-6 py-3", "Actions")
           )
         ),
         tBody(
-          idAttr := "jobs",
+          idAttr    := "jobs",
           Html.fromSeq(model.rows.map(JobTableRow.view(_)))
         )
       )

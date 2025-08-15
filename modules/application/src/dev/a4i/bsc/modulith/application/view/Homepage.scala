@@ -14,12 +14,12 @@ object Homepage:
         script(srcAttr   := "/assets/scripts/tailwindcss.min.js"),
         style(typeAttr   := "text/tailwindcss"),
         link(relAttr     := "stylesheet", hrefAttr  := "/assets/styles/flowbite.min.css"),
+        link(relAttr     := "stylesheet", hrefAttr  := "https://esm.sh/ol/ol.css"),
         link(relAttr     := "stylesheet", hrefAttr  := "/assets/styles/main.css"),
         script(srcAttr   := "/assets/scripts/flowbite.min.js"),
         script(srcAttr   := "/assets/scripts/htmx.min.js"),
         script(srcAttr   := "/assets/scripts/htmx-form-json.js"),
         script(srcAttr   := "/assets/scripts/app.js")
-        // script("htmx.config.useTemplateFragments = true")
       ),
       body(
         hxHeadersAttr := """js:{"X-Timezone": Intl.DateTimeFormat().resolvedOptions().timeZone}""",

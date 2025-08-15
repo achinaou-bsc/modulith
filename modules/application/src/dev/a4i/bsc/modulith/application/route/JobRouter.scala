@@ -11,6 +11,7 @@ import zio.http.template.*
 import zio.schema.Schema
 import zio.schema.codec.BinaryCodec
 import zio.schema.codec.JsonCodec.schemaBasedBinaryCodec
+import zio.stream.ZStream
 
 import dev.a4i.bsc.modulith.application.htmx.*
 import dev.a4i.bsc.modulith.application.mapping.JobMapper.given
@@ -68,7 +69,7 @@ class JobRouter(jobService: JobService):
                              .fromEither(summon[BinaryCodec[JobCreator.Model.FormData]].decode(body))
                              .map(_.transformInto[Job.Preamble])
                              .orDieWith(RuntimeException(_))
-          createdEntity <- jobService.create(entity)
+          createdEntity <- jobService.submit(entity)
           model          = createdEntity.transformInto[JobViewer.Model]
           viewer         = JobViewer.view(model)
           response       = Response
@@ -79,7 +80,7 @@ class JobRouter(jobService: JobService):
 
   private lazy val viewerRoutes: Routes[Any, Response] =
     literal("viewer") / Routes(
-      Method.GET / Root / uuid("id") -> handler: (id: UUID, request: Request) =>
+      Method.GET / Root / uuid("id")                -> handler: (id: UUID, request: Request) =>
         given ZoneId = ZoneId.of(request.header[String]("X-Timezone").getOrElse("UTC"))
 
         for
@@ -90,6 +91,15 @@ class JobRouter(jobService: JobService):
           viewer   = model.map(JobViewer.view)
           response = viewer.fold(Response.notFound)(Response.html(_))
         yield response
+      ,
+      Method.GET / Root / uuid("id") / "geojsonseq" -> handler: (id: UUID, _: Request) =>
+        ZIO.scoped:
+          for inputStream <- jobService.streamOutput(id)
+          yield Response(
+            Status.Ok,
+            Headers(Header.ContentType(MediaType.application.`geo+json-seq`)),
+            Body.fromStreamChunked(ZStream.fromInputStream(inputStream))
+          )
     )
 
 object JobRouter:

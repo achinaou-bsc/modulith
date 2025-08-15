@@ -7,7 +7,7 @@ import zio.stream.*
 
 import dev.a4i.bsc.modulith.application.geo.FeatureCollectionExtensions.*
 
-class GeoJSONLService:
+class GeoJSONSequenceService:
 
   def encode(featureCollection: SimpleFeatureCollection): ZStream[Scope, Throwable, Byte] =
     featureCollection.featuresStream
@@ -15,7 +15,7 @@ class GeoJSONLService:
       .intersperse("\n")
       .via(ZPipeline.utf8Encode)
 
-object GeoJSONLService:
+object GeoJSONSequenceService:
 
-  val layer: ULayer[GeoJSONLService] =
-    ZLayer.derive[GeoJSONLService]
+  val layer: ULayer[GeoJSONSequenceService] =
+    ZLayer.derive[GeoJSONSequenceService]
