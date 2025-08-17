@@ -19,7 +19,7 @@ object Homepage:
         script(srcAttr   := "/assets/scripts/flowbite.min.js"),
         script(srcAttr   := "/assets/scripts/htmx.min.js"),
         script(srcAttr   := "/assets/scripts/htmx-form-json.js"),
-        script(srcAttr   := "/assets/scripts/app.js")
+        script(typeAttr  := "module", srcAttr       := "/assets/scripts/app.js")
       ),
       body(
         hxHeadersAttr := """js:{"X-Timezone": Intl.DateTimeFormat().resolvedOptions().timeZone}""",
@@ -31,9 +31,15 @@ object Homepage:
             a(
               hrefAttr  := "http://localhost:8080",
               classAttr := "flex items-center space-x-3 rtl:space-x-reverse",
-              img(srcAttr    := "/assets/images/logo.png", classAttr := "h-8", altAttr := "Logo"),
-              span(classAttr := "self-center text-2xl font-semibold whitespace-nowrap dark:text-white",
-                "Polygon Overlay")
+              img(
+                srcAttr   := "/assets/images/logo.png",
+                altAttr   := "Logo",
+                classAttr := "h-8"
+              ),
+              span(
+                classAttr := "self-center text-2xl font-semibold whitespace-nowrap dark:text-white",
+                "Polygon Overlay"
+              )
             ),
             div(
               classAttr := "flex items-center md:order-2 space-x-1 md:space-x-2 rtl:space-x-reverse",

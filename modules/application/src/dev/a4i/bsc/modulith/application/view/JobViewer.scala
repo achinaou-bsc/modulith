@@ -141,8 +141,16 @@ object JobViewer:
               valueAttr       := model.completedAt.fold("")(dateTimeFormatter.withZone(zoneId).format)
             )
           )
+        ),
+        div(
+          idAttr    := s"map-${model.id}",
+          classAttr := "map"
         )
       ),
-      div(idAttr      := "map"),
-      script(typeAttr := "module", srcAttr := "/assets/scripts/map.js")
+      script(
+        typeAttr := "module",
+        s"""
+        import { mountGeoJsonSeqMap } from "/assets/scripts/map.js"
+        mountGeoJsonSeqMap("map-${model.id}", "/jobs/viewer/${model.id}/geojsonseq")"""
+      )
     )
