@@ -10,13 +10,13 @@ import dev.a4i.bsc.modulith.application.hadoop.HadoopFileSystem
 import dev.a4i.bsc.modulith.application.hadoop.HadoopFileSystemWorkspace
 import dev.a4i.bsc.modulith.application.persistence.Job.*
 import dev.a4i.bsc.modulith.application.persistence.JobRepository
-import dev.a4i.bsc.modulith.application.postgis.WADAridityRepository
+import dev.a4i.bsc.modulith.application.postgis.GlobalAiHistoricalAverageRepository
 import dev.a4i.bsc.modulith.application.postgis.WorldClimHistoricalTemperatureAverageRepository
 
 class JobService(
     jobRepository: JobRepository,
     worldClimHistoricalTemperatureAverageRepository: WorldClimHistoricalTemperatureAverageRepository,
-    wadAridityRepository: WADAridityRepository,
+    globalAiHistoricalAverageRepository: GlobalAiHistoricalAverageRepository,
     hdfs: HadoopFileSystem,
     jobSubmitter: JobSubmitter,
     jobStatusSynchronizer: JobStatusSynchronizer
@@ -36,13 +36,13 @@ class JobService(
       readyJob      <- jobRepository.create(job)
       base          <- worldClimHistoricalTemperatureAverageRepository.findAll(
                          readyJob.temperaturePredicate,
-                         Some(1)
+                         None
                        )
-      overlay       <- wadAridityRepository.findAll(
+      overlay       <- globalAiHistoricalAverageRepository.findAll(
                          readyJob.aridityPredicate,
-                         Some(1)
+                         None
                        )
-      computationId <- jobSubmitter.submit(readyJob, base, base)
+      computationId <- jobSubmitter.submit(readyJob, base, overlay)
       submittedJob  <- jobRepository
                          .markAsSubmitted(readyJob.id, computationId)
                          .as(readyJob.copy(status = Status.Submitted, computationId = Some(computationId)))
@@ -64,8 +64,8 @@ class JobService(
 object JobService:
 
   type Dependencies =
-    JobRepository & WorldClimHistoricalTemperatureAverageRepository & WADAridityRepository & HadoopFileSystem &
-      JobSubmitter & JobStatusSynchronizer
+    JobRepository & WorldClimHistoricalTemperatureAverageRepository & GlobalAiHistoricalAverageRepository &
+      HadoopFileSystem & JobSubmitter & JobStatusSynchronizer
 
   val layer: URLayer[Dependencies, JobService] =
     ZLayer.derive[JobService]

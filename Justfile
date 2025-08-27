@@ -46,8 +46,17 @@ local-env-destroy:
 
 local-env-reset: local-env-destroy local-env-create
 
-tunnel-hadoop:
-  gcloud compute ssh hadoop-m --project="$GCLOUD_PROJECT_ID" --zone="$GCLOUD_ZONE" --tunnel-through-iap -- \
+gcloud-hadoop-fetch-configuration:
+  mkdir --parents ~/hadoop
+
+  gcloud compute scp --recurse --project="$GCLOUD_PROJECT_ID" --zone="$GCLOUD_ZONE" \
+    "$GCLOUD_INSTANCE":/etc/hadoop/conf/core-site.xml \
+    "$GCLOUD_INSTANCE":/etc/hadoop/conf/hdfs-site.xml \
+    "$GCLOUD_INSTANCE":/etc/hadoop/conf/yarn-site.xml \
+    ~/hadoop
+
+gcloud-hadoop-tunnel:
+  gcloud compute ssh "$GCLOUD_INSTANCE" --project="$GCLOUD_PROJECT_ID" --zone="$GCLOUD_ZONE" --tunnel-through-iap -- \
     -N \
     -L 8020:$GCLOUD_INSTANCE:8020 \
     -L 8032:$GCLOUD_INSTANCE:8032 \

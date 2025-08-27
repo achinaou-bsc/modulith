@@ -9,12 +9,13 @@ import zio.*
 
 import dev.a4i.bsc.modulith.application.postgis.PostGISDataStore
 
-class WADAridityRepository(dataSource: PostGISDataStore):
+class GlobalAiHistoricalAverageRepository(dataSource: PostGISDataStore):
 
-  private val featureSource: SimpleFeatureSource = dataSource.getFeatureSource(WADAridityRepository.tableName)
+  private val featureSource: SimpleFeatureSource =
+    dataSource.getFeatureSource(GlobalAiHistoricalAverageRepository.tableName)
 
   def findAll(limit: Option[Int]): UIO[SimpleFeatureCollection] =
-    val query: Query = Query(WADAridityRepository.tableName)
+    val query: Query = Query(GlobalAiHistoricalAverageRepository.tableName)
 
     limit match
       case Some(limit) => query.setMaxFeatures(limit)
@@ -26,7 +27,7 @@ class WADAridityRepository(dataSource: PostGISDataStore):
 
   def findAll(predicate: String, limit: Option[Int]): UIO[SimpleFeatureCollection] =
     val filter: Filter = ECQL.toFilter(predicate)
-    val query: Query   = Query(WADAridityRepository.tableName, filter)
+    val query: Query   = Query(GlobalAiHistoricalAverageRepository.tableName, filter)
 
     limit match
       case Some(limit) => query.setMaxFeatures(limit)
@@ -36,9 +37,9 @@ class WADAridityRepository(dataSource: PostGISDataStore):
       .attemptBlocking(featureSource.getFeatures(query))
       .orDie
 
-object WADAridityRepository:
+object GlobalAiHistoricalAverageRepository:
 
-  private val tableName: String = "wad_aridity"
+  private val tableName: String = "global_ai_historical_average"
 
-  val layer: URLayer[PostGISDataStore, WADAridityRepository] =
-    ZLayer.derive[WADAridityRepository]
+  val layer: URLayer[PostGISDataStore, GlobalAiHistoricalAverageRepository] =
+    ZLayer.derive[GlobalAiHistoricalAverageRepository]

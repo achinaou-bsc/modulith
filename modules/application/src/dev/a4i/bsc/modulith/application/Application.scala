@@ -26,6 +26,7 @@ object Application extends ZIOAppDefault:
         DynamicRouter.layer,
         GeoJSONSequenceService.layer,
         GitHub.layer,
+        GlobalAiHistoricalAverageRepository.layer,
         HadoopConfiguration.layer,
         HadoopFileSystem.layer,
         HttpClient.layer,
@@ -44,7 +45,6 @@ object Application extends ZIOAppDefault:
         Server.default,
         StaticRouter.layer,
         TransactorZIO.layer(SqlLogger.NoOp),
-        WADAridityRepository.layer,
         WorldClimHistoricalTemperatureAverageRepository.layer,
         YarnClient.layer
       )

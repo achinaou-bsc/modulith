@@ -150,7 +150,7 @@ object JobViewer:
       script(
         typeAttr := "module",
         s"""
-        import { mountGeoJsonSeqMap } from "/assets/scripts/map.js"
+        import { mountGeoJsonSeqMap } from "/assets/scripts/app.js"
         mountGeoJsonSeqMap("map-${model.id}", "/jobs/viewer/${model.id}/geojsonseq")"""
       )
     )
