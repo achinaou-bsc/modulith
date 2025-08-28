@@ -26,6 +26,16 @@ object HadoopConfiguration:
                                 set("dfs.client.use.datanode.hostname", "true")
                                 set("fs.AbstractFileSystem.hdfs.impl", "org.apache.hadoop.fs.Hdfs")
 
+                                setIfUnset(
+                                  "yarn.resourcemanager.address",
+                                  get("yarn.resourcemanager.hostname") + ":8032"
+                                )
+
+                                setIfUnset(
+                                  "yarn.timeline-service.address",
+                                  get("yarn.timeline-service.hostname") + ":10200"
+                                )
+
                                 configuration.mapredDefault.yarnAppMapreduceAmJobClientPortRange match
                                   case Some(PortRange(start, end)) =>
                                     set("yarn.app.mapreduce.am.job.client.port-range", s"$start-$end")
