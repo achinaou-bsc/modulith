@@ -77,25 +77,6 @@ class PolygonOverlayHadoopMapReduceService(
     for
       jobConfiguration = new Configuration(hadoopConfiguration):
                            set("mapreduce.job.jar", toolDescriptor.jar.hdfs.toString)
-
-                           // OPTIMAL: 8 reducers for 4-node cluster
-                           setInt("mapreduce.job.reduces", 8)
-                           setInt("mapreduce.reduce.memory.mb", 10240)    // 10GB per reducer
-                           set("mapreduce.reduce.java.opts", "-Xmx8192m") // 8GB heap
-                           setInt("mapreduce.map.memory.mb", 6144)        // 6GB per mapper
-                           set("mapreduce.map.java.opts", "-Xmx4608m")    // 4.5GB heap
-
-                           // Shuffle settings (can be less aggressive with 8 vs 4)
-                           setInt("mapreduce.reduce.shuffle.maxfetchfailures", 300)
-                           setInt("mapreduce.reduce.shuffle.connect.timeout", 900000) // 15 min
-                           setInt("mapreduce.reduce.shuffle.read.timeout", 900000)    // 15 min
-                           setInt("mapreduce.reduce.shuffle.parallelcopies", 3)       // Slightly more aggressive
-                           setInt("mapreduce.task.timeout", 3600000)                  // 1 hour per task
-
-                           // Anti-spilling settings
-                           setFloat("mapreduce.map.sort.spill.percent", 0.9f)
-                           setFloat("mapreduce.reduce.shuffle.merge.percent", 0.9f)
-                           setFloat("mapreduce.reduce.shuffle.memory.limit.percent", 0.8f)
       loader          <- ZIO
                            .attempt:
                              URLClassLoader(Array(toolDescriptor.jar.local.toNIO.toUri.toURL), getClass.getClassLoader)
