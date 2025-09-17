@@ -19,9 +19,8 @@ export function mountGeoJsonSeqMap(targetElementId, geoJsonSeqUrl) {
   const vectorLayer = new VectorLayer({
     source: vectorSource,
     style: new Style({
-      stroke: new Stroke({ width: 1 }),
-      fill: new Fill({ color: "#ffd3acdf" }),
-      image: new CircleStyle({ radius: 5, fill: new Fill({ color: "red" }) })
+      stroke: new Stroke({ width: 1, color: "#ffd3acdf" }),
+      fill: new Fill({ color: "#ffd3acdf" })
     })
   })
 
